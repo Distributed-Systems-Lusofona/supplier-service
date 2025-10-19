@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import pt.ulusofona.cd.store.client.ProductClient;
 import pt.ulusofona.cd.store.dto.ProductDto;
 import pt.ulusofona.cd.store.dto.SupplierRequest;
+import pt.ulusofona.cd.store.events.SupplierEventProducer;
 import pt.ulusofona.cd.store.exception.SupplierNotFoundException;
 import pt.ulusofona.cd.store.mapper.SupplierMapper;
 import pt.ulusofona.cd.store.model.Supplier;
@@ -20,6 +21,8 @@ public class SupplierService {
 
     private final SupplierRepository supplierRepository;
     private final ProductClient productClient;
+
+    private final SupplierEventProducer supplierEventProducer;
 
     @Transactional
     public Supplier createSupplier(SupplierRequest request) {
@@ -76,7 +79,12 @@ public class SupplierService {
     public Supplier deactivateSupplier(UUID id) {
         Supplier supplier = getSupplierById(id);
         supplier.setActive(false);
-        return supplierRepository.save(supplier);
+
+        Supplier supplierUpdate = supplierRepository.save(supplier);
+
+        supplierEventProducer.sendSupplierDeactivatedEvent(supplier.getId());
+
+        return supplierUpdate;
     }
 
     @Transactional
