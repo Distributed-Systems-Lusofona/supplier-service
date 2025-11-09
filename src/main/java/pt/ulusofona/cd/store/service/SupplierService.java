@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pt.ulusofona.cd.store.client.ProductClient;
+import pt.ulusofona.cd.store.client.ProductGrpcClient;
 import pt.ulusofona.cd.store.dto.ProductDto;
 import pt.ulusofona.cd.store.dto.SupplierRequest;
 import pt.ulusofona.cd.store.events.SupplierEventProducer;
@@ -23,6 +24,8 @@ public class SupplierService {
     private final ProductClient productClient;
 
     private final SupplierEventProducer supplierEventProducer;
+
+    private final ProductGrpcClient productGrpcClient;
 
     @Transactional
     public Supplier createSupplier(SupplierRequest request) {
@@ -90,6 +93,14 @@ public class SupplierService {
     @Transactional
     public void deleteSupplier(UUID id) {
         Supplier supplier = getSupplierById(id);
+
+        int count = productGrpcClient.countDiscontinuedProducts(id.toString(), false);
+        if (count > 0) {
+            throw new IllegalStateException(
+                    "Supplier cannot be deleted because they still have " + count + " active products associated."
+            );
+        }
+
         supplierRepository.delete(supplier);
     }
 
