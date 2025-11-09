@@ -17,6 +17,17 @@ spring:
       hibernate:
         format_sql: true
 
+  kafka:
+    producer:
+      bootstrap-servers: kafka:9092
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+
+supplier:
+  events:
+    supplier-deactivated-events: supplier-deactivated-events
+
 feign:
   client:
     config:
